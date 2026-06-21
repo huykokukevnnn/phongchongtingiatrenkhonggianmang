@@ -1,29 +1,86 @@
-// Ensure exactly N words by truncating or padding
-function adjustWordCount(text, targetCount) {
-    let words = text.split(/\s+/).filter(w => w.length > 0);
-    
-    if (words.length >= targetCount) {
-        return words.slice(0, targetCount).join(" ");
+// Ensure exactly N words by truncating or padding an array of words
+function adjustWordCountArr(wordsArray, targetCount, paddingSentence) {
+    if (wordsArray.length >= targetCount) {
+        return wordsArray.slice(0, targetCount);
     } else {
-        // Pad with a neutral sentence until we hit the target
-        const paddingSentence = "Đây là một câu thông tin bổ sung để đảm bảo đủ số lượng từ theo yêu cầu của bài tập phân tích nội dung.";
-        let padWords = paddingSentence.split(/\s+/);
-        while (words.length < targetCount) {
-            words = words.concat(padWords);
+        let padded = [...wordsArray];
+        let padWords = paddingSentence.split(/\s+/).filter(w => w.length > 0);
+        while (padded.length < targetCount) {
+            padded = padded.concat(padWords);
         }
-        return words.slice(0, targetCount).join(" ");
+        return padded.slice(0, targetCount);
     }
 }
 
 // Process raw articles to exactly 800 context words and exactly 200 fake words
 const processedArticles = rawArticles.map(article => {
-    const exactContext = adjustWordCount(article.context, 800);
-    const exactFake = adjustWordCount(article.fake, 200);
+    let totalContextWords = [];
+    let fakeWords = [];
     
+    // First pass: tokenize
+    let parsedParagraphs = article.paragraphs.map(p => {
+        if (p.type === 'body_fake') {
+            const cWords = p.context_text.split(/\s+/).filter(w => w.length > 0);
+            const fWords = p.fake_text.split(/\s+/).filter(w => w.length > 0);
+            return {
+                type: p.type,
+                contextWords: cWords,
+                fakeWords: fWords
+            };
+        } else {
+            const cWords = p.text.split(/\s+/).filter(w => w.length > 0);
+            return {
+                type: p.type,
+                contextWords: cWords
+            };
+        }
+    });
+    
+    // Aggregate to check counts
+    parsedParagraphs.forEach(p => {
+        totalContextWords = totalContextWords.concat(p.contextWords || []);
+        if (p.fakeWords) {
+            fakeWords = fakeWords.concat(p.fakeWords);
+        }
+    });
+    
+    // Pad fake segment
+    const exactFakeWords = adjustWordCountArr(fakeWords, 200, "Đây là một thông tin giả mạo thêm vào để đánh lừa người đọc.");
+    
+    // Distribute exact fake words back to the body_fake paragraph
+    parsedParagraphs.forEach(p => {
+        if (p.type === 'body_fake') {
+            p.fakeWords = exactFakeWords;
+        }
+    });
+    
+    // Pad context words into the conclusion if needed, or truncate from the end
+    const exactContextWords = adjustWordCountArr(totalContextWords, 800, "Đây là một câu thông tin bổ sung có tính chất khách quan để làm rõ thêm bối cảnh của vấn đề đang được thảo luận.");
+    
+    // Redistribute exact context words back to paragraphs sequentially
+    let contextPointer = 0;
+    parsedParagraphs.forEach(p => {
+        const originalLen = p.contextWords.length;
+        // If we still have exactContextWords to assign
+        if (contextPointer < 800) {
+            // Check if this is the last paragraph. If so, give it all remaining words.
+            if (p.type === 'conclusion') {
+                p.contextWords = exactContextWords.slice(contextPointer);
+                contextPointer = 800;
+            } else {
+                // Otherwise, give it up to its original length
+                const takeCount = Math.min(originalLen, 800 - contextPointer);
+                p.contextWords = exactContextWords.slice(contextPointer, contextPointer + takeCount);
+                contextPointer += takeCount;
+            }
+        } else {
+            p.contextWords = []; // truncated out
+        }
+    });
+
     return {
         title: article.title,
-        contextWords: exactContext.split(/\s+/),
-        fakeWords: exactFake.split(/\s+/)
+        paragraphs: parsedParagraphs
     };
 });
 
@@ -32,6 +89,7 @@ let currentLevel = 0;
 let attempts = 0;
 let isDragging = false;
 let currentHighlightedSet = new Set(); // Stores indices of highlighted words
+let globalWordIndex = 0;
 
 // DOM Elements
 const levelDisplay = document.getElementById('level-display');
@@ -79,54 +137,66 @@ function renderArticle() {
     articleTitle.textContent = article.title;
     
     articleContent.innerHTML = ''; // Clear
+    globalWordIndex = 0;
     
-    // We append the fake segment after the context segment
-    // To make it look natural, we just render them consecutively.
+    article.paragraphs.forEach(p => {
+        // Create paragraph wrapper
+        const pElement = document.createElement('p');
+        pElement.className = 'mb-6 md:mb-8'; // Clear spacing between paragraphs
+        
+        // Render context words
+        if (p.contextWords && p.contextWords.length > 0) {
+            p.contextWords.forEach(wordText => {
+                const span = createWordSpan(wordText, false);
+                pElement.appendChild(span);
+                pElement.appendChild(document.createTextNode(' '));
+            });
+        }
+        
+        // Render fake words if it's body_fake
+        if (p.type === 'body_fake' && p.fakeWords && p.fakeWords.length > 0) {
+            p.fakeWords.forEach(wordText => {
+                const span = createWordSpan(wordText, true);
+                pElement.appendChild(span);
+                pElement.appendChild(document.createTextNode(' '));
+            });
+        }
+        
+        // Append paragraph to container if it has content
+        if (pElement.childNodes.length > 0) {
+            articleContent.appendChild(pElement);
+        }
+    });
+}
+
+function createWordSpan(text, isFake) {
+    const span = document.createElement('span');
+    span.className = 'word';
+    span.textContent = text;
+    span.dataset.index = globalWordIndex;
+    span.dataset.isFake = isFake;
     
-    const allWords = [];
+    const currentIndex = globalWordIndex;
     
-    // Push context words
-    article.contextWords.forEach((word) => {
-        allWords.push({ text: word, isFake: false });
+    // Mouse events for drag highlighting
+    span.addEventListener('mousedown', () => handleWordInteraction(currentIndex, span));
+    span.addEventListener('mouseenter', () => {
+        if (isDragging) handleWordInteraction(currentIndex, span);
     });
     
-    // Push fake words
-    article.fakeWords.forEach((word) => {
-        allWords.push({ text: word, isFake: true });
+    // Touch events
+    span.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevent scroll while highlighting
+        handleWordInteraction(currentIndex, span);
     });
     
-    // Create DOM elements
-    allWords.forEach((item, index) => {
-        const span = document.createElement('span');
-        span.className = 'word';
-        span.textContent = item.text + " ";
-        span.dataset.index = index;
-        span.dataset.isFake = item.isFake;
-        
-        // Mouse events for drag highlighting
-        span.addEventListener('mousedown', () => handleWordInteraction(index, span));
-        span.addEventListener('mouseenter', () => {
-            if (isDragging) handleWordInteraction(index, span);
-        });
-        
-        // Touch events
-        span.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Prevent scroll while highlighting
-            handleWordInteraction(index, span);
-        });
-        
-        articleContent.appendChild(span);
-    });
+    globalWordIndex++;
+    return span;
 }
 
 // Interaction logic
 function handleWordInteraction(index, spanElement) {
-    if (attempts >= 2 && modal.classList.contains('hidden') === false) return; // Block interaction if level is fully over and modal is showing
-    
-    // We block interaction if the level has been verified and waiting for next.
-    // Wait, the prompt says: "Retain the student's current highlights" if attempts < 2.
-    // So they CAN modify highlights if attempts < 2. 
-    // If we're showing the "Answer key visualization" (Green/Red), we shouldn't let them edit.
+    if (attempts >= 2 && modal.classList.contains('hidden') === false) return; 
     if (btnVerify.disabled) return; // Prevent editing after verify is finalized
     
     if (currentHighlightedSet.has(index)) {
@@ -142,14 +212,13 @@ function handleWordInteraction(index, spanElement) {
 document.addEventListener('mousedown', () => isDragging = true);
 document.addEventListener('mouseup', () => isDragging = false);
 
-// Touch move handler to find element under finger
+// Touch move handler to find element under finger across paragraphs
 document.addEventListener('touchmove', (e) => {
     if (!isDragging) return;
     const touch = e.touches[0];
     const element = document.elementFromPoint(touch.clientX, touch.clientY);
     if (element && element.classList.contains('word') && !btnVerify.disabled) {
         const idx = parseInt(element.dataset.index);
-        // Only highlight, don't toggle repeatedly while moving
         if (!currentHighlightedSet.has(idx)) {
             currentHighlightedSet.add(idx);
             element.classList.add('highlighted');
@@ -218,17 +287,13 @@ function visualizeAnswerKey(wordSpans) {
         const isFake = span.dataset.isFake === "true";
         const isHighlighted = span.classList.contains('highlighted');
         
-        // Remove standard highlight
         span.classList.remove('highlighted');
         
         if (isFake && isHighlighted) {
-            // Correctly highlighted fake word
             span.classList.add('correct');
         } else if (isFake && !isHighlighted) {
-            // Missed fake word
             span.classList.add('missed');
         } else if (!isFake && isHighlighted) {
-            // Wrongly highlighted context word
             span.classList.add('wrong');
         }
     });
@@ -250,9 +315,7 @@ function showModal(isSuccess, message) {
     modalIcon.textContent = isSuccess ? "🎉" : "💡";
     modalDesc.textContent = message;
     
-    // Show modal
     modal.classList.remove('hidden');
-    // trigger reflow
     void modal.offsetWidth;
     modal.classList.remove('opacity-0');
     modalContent.classList.remove('scale-95');
@@ -260,14 +323,12 @@ function showModal(isSuccess, message) {
 }
 
 btnNext.addEventListener('click', () => {
-    // Hide modal
     modal.classList.add('opacity-0');
     modalContent.classList.remove('scale-100');
     modalContent.classList.add('scale-95');
     
     setTimeout(() => {
         modal.classList.add('hidden');
-        // Next level
         btnReset.disabled = false;
         btnReset.classList.remove('opacity-50', 'cursor-not-allowed');
         initLevel(currentLevel + 1);

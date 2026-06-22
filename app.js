@@ -1,89 +1,3 @@
-// Ensure exactly N words by truncating or padding an array of words
-function adjustWordCountArr(wordsArray, targetCount, paddingSentence) {
-    if (wordsArray.length >= targetCount) {
-        return wordsArray.slice(0, targetCount);
-    } else {
-        let padded = [...wordsArray];
-        let padWords = paddingSentence.split(/\s+/).filter(w => w.length > 0);
-        while (padded.length < targetCount) {
-            padded = padded.concat(padWords);
-        }
-        return padded.slice(0, targetCount);
-    }
-}
-
-// Process raw articles to exactly 800 context words and exactly 200 fake words
-const processedArticles = rawArticles.map(article => {
-    let totalContextWords = [];
-    let fakeWords = [];
-    
-    // First pass: tokenize
-    let parsedParagraphs = article.paragraphs.map(p => {
-        if (p.type === 'body_fake') {
-            const cWords = p.context_text.split(/\s+/).filter(w => w.length > 0);
-            const fWords = p.fake_text.split(/\s+/).filter(w => w.length > 0);
-            return {
-                type: p.type,
-                contextWords: cWords,
-                fakeWords: fWords
-            };
-        } else {
-            const cWords = p.text.split(/\s+/).filter(w => w.length > 0);
-            return {
-                type: p.type,
-                contextWords: cWords
-            };
-        }
-    });
-    
-    // Aggregate to check counts
-    parsedParagraphs.forEach(p => {
-        totalContextWords = totalContextWords.concat(p.contextWords || []);
-        if (p.fakeWords) {
-            fakeWords = fakeWords.concat(p.fakeWords);
-        }
-    });
-    
-    // Pad fake segment
-    const exactFakeWords = adjustWordCountArr(fakeWords, 200, "Đây là một thông tin giả mạo thêm vào để đánh lừa người đọc.");
-    
-    // Distribute exact fake words back to the body_fake paragraph
-    parsedParagraphs.forEach(p => {
-        if (p.type === 'body_fake') {
-            p.fakeWords = exactFakeWords;
-        }
-    });
-    
-    // Pad context words into the conclusion if needed, or truncate from the end
-    const exactContextWords = adjustWordCountArr(totalContextWords, 800, "Đây là một câu thông tin bổ sung có tính chất khách quan để làm rõ thêm bối cảnh của vấn đề đang được thảo luận.");
-    
-    // Redistribute exact context words back to paragraphs sequentially
-    let contextPointer = 0;
-    parsedParagraphs.forEach(p => {
-        const originalLen = p.contextWords.length;
-        if (contextPointer < 800) {
-            if (p.type === 'conclusion') {
-                p.contextWords = exactContextWords.slice(contextPointer);
-                contextPointer = 800;
-            } else {
-                const takeCount = Math.min(originalLen, 800 - contextPointer);
-                p.contextWords = exactContextWords.slice(contextPointer, contextPointer + takeCount);
-                contextPointer += takeCount;
-            }
-        } else {
-            p.contextWords = [];
-        }
-    });
-
-    return {
-        title: article.title,
-        url: article.url,
-        category: article.category,
-        date: article.date,
-        paragraphs: parsedParagraphs
-    };
-});
-
 // App State
 let currentLevel = 0;
 let attempts = 0;
@@ -91,6 +5,7 @@ let hintsRemaining = 3;
 let isDragging = false;
 let currentHighlightedSet = new Set();
 let globalWordIndex = 0;
+let totalFakeWordsInLevel = 0;
 
 // DOM Elements
 const levelDisplay = document.getElementById('level-display');
@@ -119,7 +34,7 @@ const modalContent = document.getElementById('modal-content');
 
 // Initialize first level
 function initLevel(levelIndex) {
-    if (levelIndex >= processedArticles.length) {
+    if (levelIndex >= rawArticles.length) {
         showCompletionScreen();
         return;
     }
@@ -141,7 +56,10 @@ function updateUI() {
     // Reset buttons state
     btnVerify.disabled = false;
     btnVerify.classList.remove('hidden');
+    btnVerify.classList.remove('opacity-50', 'cursor-not-allowed');
     btnReset.classList.remove('hidden');
+    btnReset.disabled = false;
+    btnReset.classList.remove('opacity-50', 'cursor-not-allowed');
     btnProceedReview.classList.add('hidden');
     
     if (hintsRemaining <= 0) {
@@ -154,7 +72,7 @@ function updateUI() {
 }
 
 function renderArticle() {
-    const article = processedArticles[currentLevel];
+    const article = rawArticles[currentLevel];
     
     // Inject Metadata
     articleTitle.textContent = article.title;
@@ -167,9 +85,10 @@ function renderArticle() {
     
     articleContent.innerHTML = ''; // Clear
     globalWordIndex = 0;
+    totalFakeWordsInLevel = 0;
     
-    article.paragraphs.forEach((p, index) => {
-        // Inject SubHeadline and Image before the 2nd paragraph
+    article.blocks.forEach((block, index) => {
+        // Inject SubHeadline and Image before the 2nd paragraph block
         if (index === 1) {
             if (article.subHeadline) {
                 const h3 = document.createElement('h3');
@@ -200,25 +119,16 @@ function renderArticle() {
         const pElement = document.createElement('p');
         pElement.className = 'mb-6 md:mb-8'; 
         
-        // Render context words
-        if (p.contextWords && p.contextWords.length > 0) {
-            p.contextWords.forEach(wordText => {
-                const span = createWordSpan(wordText, false);
+        block.forEach(sentence => {
+            const words = sentence.text.split(/\s+/).filter(w => w.length > 0);
+            words.forEach(wordText => {
+                const span = createWordSpan(wordText, sentence.isFake);
                 pElement.appendChild(span);
                 pElement.appendChild(document.createTextNode(' '));
+                if (sentence.isFake) totalFakeWordsInLevel++;
             });
-        }
+        });
         
-        // Render fake words if it's body_fake
-        if (p.type === 'body_fake' && p.fakeWords && p.fakeWords.length > 0) {
-            p.fakeWords.forEach(wordText => {
-                const span = createWordSpan(wordText, true);
-                pElement.appendChild(span);
-                pElement.appendChild(document.createTextNode(' '));
-            });
-        }
-        
-        // Append paragraph to container if it has content
         if (pElement.childNodes.length > 0) {
             articleContent.appendChild(pElement);
         }
@@ -249,7 +159,7 @@ function createWordSpan(text, isFake) {
 }
 
 function handleWordInteraction(index, spanElement) {
-    if (attempts >= 2 && modal.classList.contains('hidden') === false) return; 
+    if (attempts >= 3 && modal.classList.contains('hidden') === false) return; 
     if (btnVerify.disabled) return; 
     
     if (currentHighlightedSet.has(index)) {
@@ -324,8 +234,8 @@ function verifyResults() {
         if (isFake && isHighlighted) correctHighlights++;
     });
     
-    const totalFakeWords = 200; 
-    const ratio = correctHighlights / totalFakeWords;
+    // Dynamic ratio based on strictly authored text
+    const ratio = correctHighlights / (totalFakeWordsInLevel > 0 ? totalFakeWordsInLevel : 1);
     
     if (ratio >= 0.8) {
         visualizeAnswerKey(wordSpans);

@@ -61,25 +61,25 @@ const processedArticles = rawArticles.map(article => {
     let contextPointer = 0;
     parsedParagraphs.forEach(p => {
         const originalLen = p.contextWords.length;
-        // If we still have exactContextWords to assign
         if (contextPointer < 800) {
-            // Check if this is the last paragraph. If so, give it all remaining words.
             if (p.type === 'conclusion') {
                 p.contextWords = exactContextWords.slice(contextPointer);
                 contextPointer = 800;
             } else {
-                // Otherwise, give it up to its original length
                 const takeCount = Math.min(originalLen, 800 - contextPointer);
                 p.contextWords = exactContextWords.slice(contextPointer, contextPointer + takeCount);
                 contextPointer += takeCount;
             }
         } else {
-            p.contextWords = []; // truncated out
+            p.contextWords = [];
         }
     });
 
     return {
         title: article.title,
+        url: article.url,
+        category: article.category,
+        date: article.date,
         paragraphs: parsedParagraphs
     };
 });
@@ -88,12 +88,15 @@ const processedArticles = rawArticles.map(article => {
 let currentLevel = 0;
 let attempts = 0;
 let isDragging = false;
-let currentHighlightedSet = new Set(); // Stores indices of highlighted words
+let currentHighlightedSet = new Set();
 let globalWordIndex = 0;
 
 // DOM Elements
 const levelDisplay = document.getElementById('level-display');
 const articleTitle = document.getElementById('article-title');
+const articleCategory = document.getElementById('article-category');
+const articleDate = document.getElementById('article-date');
+const browserUrl = document.getElementById('browser-url');
 const articleContent = document.getElementById('article-content');
 const attemptsDisplay = document.getElementById('attempts-display');
 const btnReset = document.getElementById('btn-reset');
@@ -134,7 +137,12 @@ function updateUI() {
 
 function renderArticle() {
     const article = processedArticles[currentLevel];
+    
+    // Inject Metadata
     articleTitle.textContent = article.title;
+    articleCategory.textContent = article.category;
+    articleDate.textContent = article.date;
+    browserUrl.textContent = article.url;
     
     articleContent.innerHTML = ''; // Clear
     globalWordIndex = 0;
@@ -142,7 +150,7 @@ function renderArticle() {
     article.paragraphs.forEach(p => {
         // Create paragraph wrapper
         const pElement = document.createElement('p');
-        pElement.className = 'mb-6 md:mb-8'; // Clear spacing between paragraphs
+        pElement.className = 'mb-6 md:mb-8'; 
         
         // Render context words
         if (p.contextWords && p.contextWords.length > 0) {
@@ -178,15 +186,13 @@ function createWordSpan(text, isFake) {
     
     const currentIndex = globalWordIndex;
     
-    // Mouse events for drag highlighting
     span.addEventListener('mousedown', () => handleWordInteraction(currentIndex, span));
     span.addEventListener('mouseenter', () => {
         if (isDragging) handleWordInteraction(currentIndex, span);
     });
     
-    // Touch events
     span.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // Prevent scroll while highlighting
+        e.preventDefault(); 
         handleWordInteraction(currentIndex, span);
     });
     
@@ -194,10 +200,9 @@ function createWordSpan(text, isFake) {
     return span;
 }
 
-// Interaction logic
 function handleWordInteraction(index, spanElement) {
     if (attempts >= 2 && modal.classList.contains('hidden') === false) return; 
-    if (btnVerify.disabled) return; // Prevent editing after verify is finalized
+    if (btnVerify.disabled) return; 
     
     if (currentHighlightedSet.has(index)) {
         currentHighlightedSet.delete(index);
@@ -208,11 +213,9 @@ function handleWordInteraction(index, spanElement) {
     }
 }
 
-// Global Drag State Handlers
 document.addEventListener('mousedown', () => isDragging = true);
 document.addEventListener('mouseup', () => isDragging = false);
 
-// Touch move handler to find element under finger across paragraphs
 document.addEventListener('touchmove', (e) => {
     if (!isDragging) return;
     const touch = e.touches[0];
@@ -228,7 +231,6 @@ document.addEventListener('touchmove', (e) => {
 document.addEventListener('touchstart', () => isDragging = true);
 document.addEventListener('touchend', () => isDragging = false);
 
-// Buttons
 btnReset.addEventListener('click', () => {
     if (btnVerify.disabled) return;
     currentHighlightedSet.clear();
@@ -247,21 +249,16 @@ function verifyResults() {
     wordSpans.forEach(span => {
         const isFake = span.dataset.isFake === "true";
         const isHighlighted = span.classList.contains('highlighted');
-        
-        if (isFake && isHighlighted) {
-            correctHighlights++;
-        }
+        if (isFake && isHighlighted) correctHighlights++;
     });
     
-    const totalFakeWords = 200; // Hardcoded requirement
+    const totalFakeWords = 200; 
     const ratio = correctHighlights / totalFakeWords;
     
     if (ratio >= 0.8) {
-        // Success
         visualizeAnswerKey(wordSpans);
         showModal(true, "Tuyệt vời! Bạn đã phát hiện chính xác các thông tin giả mạo.");
     } else {
-        // Fail
         if (attempts < 1) {
             attempts++;
             updateUI();
@@ -269,7 +266,6 @@ function verifyResults() {
         } else {
             attempts = 2;
             updateUI();
-            // Force complete
             visualizeAnswerKey(wordSpans);
             showModal(false, "Bạn đã hết số lần thử. Hãy xem kỹ những phần tin giả được đánh dấu đỏ mà bạn đã bỏ sót.");
         }
@@ -277,7 +273,6 @@ function verifyResults() {
 }
 
 function visualizeAnswerKey(wordSpans) {
-    // Lock interactions
     btnVerify.disabled = true;
     btnVerify.classList.add('opacity-50', 'cursor-not-allowed');
     btnReset.disabled = true;
@@ -303,15 +298,16 @@ function showToast(message) {
     toastMsg.textContent = message;
     toast.classList.remove('opacity-0', 'pointer-events-none');
     
-    // Auto hide
     setTimeout(() => {
         toast.classList.add('opacity-0', 'pointer-events-none');
-    }, 4000);
+    }, 4500);
 }
 
 function showModal(isSuccess, message) {
     modalTitle.textContent = isSuccess ? "Kết quả xuất sắc!" : "Chưa chính xác!";
-    modalTitle.className = isSuccess ? "text-4xl md:text-5xl font-extrabold text-green-400 mb-6 tracking-tight" : "text-4xl md:text-5xl font-extrabold text-red-500 mb-6 tracking-tight";
+    modalTitle.className = isSuccess 
+        ? "text-3xl md:text-4xl font-extrabold text-green-600 mb-4 tracking-tight" 
+        : "text-3xl md:text-4xl font-extrabold text-red-600 mb-4 tracking-tight";
     modalIcon.textContent = isSuccess ? "🎉" : "💡";
     modalDesc.textContent = message;
     

@@ -1,6 +1,9 @@
 const rawArticles = [
     {
         title: "Quy chế học đường và Kỳ thi tốt nghiệp mới",
+        url: "https://baochinhthuc-giaoduc.vn/thong-tin-tuyen-sinh/quy-che-thi-tot-nghiep-thpt-moi",
+        category: "GIÁO DỤC",
+        date: "Thứ Hai, 15/05/2026, 08:30 (GMT+7)",
         paragraphs: [
             {
                 type: "intro",
@@ -27,6 +30,9 @@ const rawArticles = [
     },
     {
         title: "Cảnh báo An toàn thực phẩm và Xu hướng Giới trẻ",
+        url: "https://tin-tuc-suc-khoe24h.vn/doi-song-tre/can-hien-thuc-trang-tieu-thu-tra-sua",
+        category: "SỨC KHỎE ĐỜI SỐNG",
+        date: "Thứ Tư, 17/05/2026, 14:15 (GMT+7)",
         paragraphs: [
             {
                 type: "intro",
@@ -53,6 +59,9 @@ const rawArticles = [
     },
     {
         title: "Chính sách Bảo mật và Thu phí trên Mạng xã hội",
+        url: "https://cong-nghe-so-vietnam.vn/tin-tuc/cap-nhat-thay-doi-thuat-toan-mang-xa-hoi",
+        category: "CÔNG NGHỆ BẢO MẬT",
+        date: "Thứ Sáu, 19/05/2026, 09:45 (GMT+7)",
         paragraphs: [
             {
                 type: "intro",
@@ -79,6 +88,9 @@ const rawArticles = [
     },
     {
         title: "Ứng dụng Công nghệ và Camera giám sát lớp học",
+        url: "https://nhip-song-hoc-duong.edu.vn/cong-nghe/trien-khai-ha-tang-an-ninh-truong-hoc",
+        category: "NHỊP SỐNG HỌC ĐƯỜNG",
+        date: "Chủ Nhật, 21/05/2026, 10:00 (GMT+7)",
         paragraphs: [
             {
                 type: "intro",

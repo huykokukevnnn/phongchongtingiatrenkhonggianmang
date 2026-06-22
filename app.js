@@ -330,5 +330,11 @@ function showCompletionScreen() {
     completionScreen.classList.remove('opacity-0');
 }
 
+// Shuffle articles for random order on every load
+for (let i = rawArticles.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rawArticles[i], rawArticles[j]] = [rawArticles[j], rawArticles[i]];
+}
+
 // Start app
 initLevel(0);

@@ -98,6 +98,8 @@ const articleTitle = document.getElementById('article-title');
 const articleCategory = document.getElementById('article-category');
 const articleDate = document.getElementById('article-date');
 const browserUrl = document.getElementById('browser-url');
+const articleSapo = document.getElementById('article-sapo');
+const navCategoryActive = document.getElementById('nav-category-active');
 const articleContent = document.getElementById('article-content');
 const attemptsDisplay = document.getElementById('attempts-display');
 const btnHint = document.getElementById('btn-hint');
@@ -160,10 +162,40 @@ function renderArticle() {
     articleDate.textContent = article.date;
     browserUrl.textContent = article.url;
     
+    if (articleSapo) articleSapo.textContent = article.sapo;
+    if (navCategoryActive) navCategoryActive.textContent = article.category;
+    
     articleContent.innerHTML = ''; // Clear
     globalWordIndex = 0;
     
-    article.paragraphs.forEach(p => {
+    article.paragraphs.forEach((p, index) => {
+        // Inject SubHeadline and Image before the 2nd paragraph
+        if (index === 1) {
+            if (article.subHeadline) {
+                const h3 = document.createElement('h3');
+                h3.className = 'text-2xl md:text-3xl font-black text-gray-900 mt-10 mb-6';
+                h3.textContent = article.subHeadline;
+                articleContent.appendChild(h3);
+            }
+            if (article.image) {
+                const figure = document.createElement('figure');
+                figure.className = 'my-8 max-w-3xl mx-auto';
+                const img = document.createElement('img');
+                img.src = article.image;
+                img.alt = 'Ảnh bài báo';
+                img.className = 'w-full h-auto object-cover bg-gray-100 rounded-sm';
+                figure.appendChild(img);
+                
+                if (article.imageCaption) {
+                    const figcaption = document.createElement('figcaption');
+                    figcaption.className = 'text-center text-sm md:text-base text-gray-500 mt-3 font-serif';
+                    figcaption.textContent = article.imageCaption;
+                    figure.appendChild(figcaption);
+                }
+                articleContent.appendChild(figure);
+            }
+        }
+
         // Create paragraph wrapper
         const pElement = document.createElement('p');
         pElement.className = 'mb-6 md:mb-8'; 

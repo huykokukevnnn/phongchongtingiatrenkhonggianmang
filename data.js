@@ -2,8 +2,12 @@ const rawArticles = [
     {
         title: "Quy chế học đường và Kỳ thi tốt nghiệp mới",
         url: "https://baochinhthuc-giaoduc.vn/thong-tin-tuyen-sinh/quy-che-thi-tot-nghiep-thpt-moi",
-        category: "GIÁO DỤC",
+        category: "Giáo dục",
         date: "Thứ Hai, 15/05/2026, 08:30 (GMT+7)",
+        sapo: "Nhìn vào định hướng Chương trình Giáo dục Phổ thông mới có thể thấy sự thay đổi toàn diện từ cơ sở vật chất đến phương pháp giảng dạy, đằng sau đó là muôn vàn cung bậc cảm xúc của học sinh và phụ huynh trước kỳ thi quan trọng.",
+        subHeadline: "VUI MỪNG, TIẾC NUỐI, GIẬN DỮ...",
+        image: "kythitotnghiep.jpg",
+        imageCaption: "Điểm chuẩn và quy chế mới tạo ra sự phân hóa rất lớn giữa các nhóm học sinh. ẢNH: MINH HỌA",
         paragraphs: [
             {
                 type: "intro",
@@ -31,8 +35,12 @@ const rawArticles = [
     {
         title: "Cảnh báo An toàn thực phẩm và Xu hướng Giới trẻ",
         url: "https://tin-tuc-suc-khoe24h.vn/doi-song-tre/can-hien-thuc-trang-tieu-thu-tra-sua",
-        category: "SỨC KHỎE ĐỜI SỐNG",
+        category: "Sức khỏe",
         date: "Thứ Tư, 17/05/2026, 14:15 (GMT+7)",
+        sapo: "Trà sữa - Thức uống yêu thích của hàng triệu bạn trẻ đang tiềm ẩn nhiều nguy cơ khó lường nếu sử dụng không có chừng mực, đặc biệt là khi các cơ sở kinh doanh lách luật để tối đa hóa lợi nhuận.",
+        subHeadline: "BÁO ĐỘNG TÌNH TRẠNG LẠM DỤNG ĐƯỜNG...",
+        image: "antoanthucpham.jpg",
+        imageCaption: "Thói quen tiêu thụ đồ uống nhiều đường đang gây áp lực lên hệ thống y tế công cộng. ẢNH: MINH HỌA",
         paragraphs: [
             {
                 type: "intro",
@@ -60,8 +68,12 @@ const rawArticles = [
     {
         title: "Chính sách Bảo mật và Thu phí trên Mạng xã hội",
         url: "https://cong-nghe-so-vietnam.vn/tin-tuc/cap-nhat-thay-doi-thuat-toan-mang-xa-hoi",
-        category: "CÔNG NGHỆ BẢO MẬT",
+        category: "Công nghệ",
         date: "Thứ Sáu, 19/05/2026, 09:45 (GMT+7)",
+        sapo: "Sự thay đổi về các thuật toán bảo mật và hướng đi mới của các nền tảng mạng xã hội đang làm chao đảo hàng triệu người dùng, đặc biệt trong bối cảnh lừa đảo trực tuyến ngày càng tinh vi.",
+        subHeadline: "NGƯỜI DÙNG HOANG MANG TRƯỚC LÀN SÓNG THU PHÍ...",
+        image: "thuphitrenmangxahoi.jpg",
+        imageCaption: "Quyền riêng tư và chi phí sử dụng đang là chủ đề nóng trên các diễn đàn công nghệ. ẢNH: MINH HỌA",
         paragraphs: [
             {
                 type: "intro",
@@ -89,8 +101,12 @@ const rawArticles = [
     {
         title: "Ứng dụng Công nghệ và Camera giám sát lớp học",
         url: "https://nhip-song-hoc-duong.edu.vn/cong-nghe/trien-khai-ha-tang-an-ninh-truong-hoc",
-        category: "NHỊP SỐNG HỌC ĐƯỜNG",
+        category: "Giới trẻ",
         date: "Chủ Nhật, 21/05/2026, 10:00 (GMT+7)",
+        sapo: "Chuyển đổi số trường học không chỉ mang lại cơ sở vật chất khang trang mà còn dấy lên nhiều ý kiến trái chiều về quyền riêng tư và áp lực học tập của học sinh trong thời đại AI.",
+        subHeadline: "HIỆU QUẢ HAY TẠO ÁP LỰC CHO HỌC SINH?",
+        image: "camera.jpg",
+        imageCaption: "Hệ thống giám sát thông minh mang lại lợi ích an ninh nhưng cũng dấy lên nỗi lo về quyền riêng tư. ẢNH: MINH HỌA",
         paragraphs: [
             {
                 type: "intro",

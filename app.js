@@ -87,6 +87,7 @@ const processedArticles = rawArticles.map(article => {
 // App State
 let currentLevel = 0;
 let attempts = 0;
+let hintsRemaining = 3;
 let isDragging = false;
 let currentHighlightedSet = new Set();
 let globalWordIndex = 0;
@@ -99,6 +100,9 @@ const articleDate = document.getElementById('article-date');
 const browserUrl = document.getElementById('browser-url');
 const articleContent = document.getElementById('article-content');
 const attemptsDisplay = document.getElementById('attempts-display');
+const btnHint = document.getElementById('btn-hint');
+const hintCount = document.getElementById('hint-count');
+const btnProceedReview = document.getElementById('btn-proceed-review');
 const btnReset = document.getElementById('btn-reset');
 const btnVerify = document.getElementById('btn-verify');
 const toast = document.getElementById('toast');
@@ -120,6 +124,7 @@ function initLevel(levelIndex) {
     
     currentLevel = levelIndex;
     attempts = 0;
+    hintsRemaining = 3;
     currentHighlightedSet.clear();
     
     updateUI();
@@ -127,12 +132,23 @@ function initLevel(levelIndex) {
 }
 
 function updateUI() {
-    levelDisplay.textContent = `Bài học: Màn ${currentLevel + 1}/4`;
-    attemptsDisplay.textContent = `${attempts} / 2`;
+    if (levelDisplay) levelDisplay.textContent = `Bài học: Màn ${currentLevel + 1}/4`;
+    attemptsDisplay.textContent = `${attempts} / 3`;
+    hintCount.textContent = hintsRemaining;
     
     // Reset buttons state
     btnVerify.disabled = false;
-    btnVerify.classList.remove('opacity-50', 'cursor-not-allowed');
+    btnVerify.classList.remove('hidden');
+    btnReset.classList.remove('hidden');
+    btnProceedReview.classList.add('hidden');
+    
+    if (hintsRemaining <= 0) {
+        btnHint.disabled = true;
+        btnHint.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+        btnHint.disabled = false;
+        btnHint.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
 }
 
 function renderArticle() {
@@ -231,8 +247,32 @@ document.addEventListener('touchmove', (e) => {
 document.addEventListener('touchstart', () => isDragging = true);
 document.addEventListener('touchend', () => isDragging = false);
 
+btnHint.addEventListener('click', () => {
+    if (hintsRemaining <= 0 || btnHint.disabled || btnVerify.disabled || !btnProceedReview.classList.contains('hidden')) return;
+    
+    const wordSpans = articleContent.querySelectorAll('.word');
+    for (let span of wordSpans) {
+        if (span.dataset.isFake === "true") {
+            const idx = parseInt(span.dataset.index);
+            if (!currentHighlightedSet.has(idx)) {
+                currentHighlightedSet.add(idx);
+                span.classList.add('highlighted');
+                span.scrollIntoView({ behavior: "smooth", block: "center" });
+                break;
+            }
+        }
+    }
+    
+    hintsRemaining--;
+    updateUI();
+});
+
+btnProceedReview.addEventListener('click', () => {
+    initLevel(currentLevel + 1);
+});
+
 btnReset.addEventListener('click', () => {
-    if (btnVerify.disabled) return;
+    if (btnVerify.disabled || btnReset.classList.contains('hidden')) return;
     currentHighlightedSet.clear();
     const wordSpans = articleContent.querySelectorAll('.word');
     wordSpans.forEach(span => span.classList.remove('highlighted'));
@@ -257,16 +297,18 @@ function verifyResults() {
     
     if (ratio >= 0.8) {
         visualizeAnswerKey(wordSpans);
+        btnNext.textContent = "Tiến vào Bài tiếp theo";
         showModal(true, "Tuyệt vời! Bạn đã phát hiện chính xác các thông tin giả mạo.");
     } else {
-        if (attempts < 1) {
+        if (attempts < 2) {
             attempts++;
             updateUI();
             showToast("Bạn chưa đánh dấu đủ hoặc chính xác những từ ngữ sai sự thật. Hãy đọc kỹ lại đoạn văn và thử lại!");
         } else {
-            attempts = 2;
+            attempts = 3;
             updateUI();
             visualizeAnswerKey(wordSpans);
+            btnNext.textContent = "Xem những từ bị đánh dấu thiếu";
             showModal(false, "Bạn đã hết số lần thử. Hãy xem kỹ những phần tin giả được đánh dấu đỏ mà bạn đã bỏ sót.");
         }
     }
@@ -325,9 +367,18 @@ btnNext.addEventListener('click', () => {
     
     setTimeout(() => {
         modal.classList.add('hidden');
-        btnReset.disabled = false;
-        btnReset.classList.remove('opacity-50', 'cursor-not-allowed');
-        initLevel(currentLevel + 1);
+        if (attempts >= 3 && btnNext.textContent === "Xem những từ bị đánh dấu thiếu") {
+            // Chế độ Review Mode
+            btnVerify.classList.add('hidden');
+            btnReset.classList.add('hidden');
+            btnProceedReview.classList.remove('hidden');
+            btnHint.disabled = true;
+            btnHint.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            // Chuyển sang màn tiếp theo
+            btnReset.disabled = false;
+            initLevel(currentLevel + 1);
+        }
     }, 500);
 });
 

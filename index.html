@@ -8,22 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-100 text-gray-800 min-h-screen flex items-center justify-center p-4">
+<body class="bg-white text-gray-800 h-screen w-screen overflow-hidden flex flex-col m-0 p-0">
+    <span id="level-display" class="hidden">Bài học: Màn 1/4</span>
 
-    <!-- Top App Header -->
-    <div class="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-3 flex justify-between items-center z-40 shadow-sm">
-        <h1 class="text-xl md:text-2xl font-extrabold text-blue-600 tracking-tight">
-            Phát Hiện Tin Giả
-        </h1>
-        <div class="flex items-center gap-6">
-            <div class="text-sm md:text-base font-bold bg-blue-50 text-blue-800 px-5 py-2 rounded-full border border-blue-200 shadow-sm">
-                <span id="level-display">Bài học: Màn 1/4</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Application Container (Landscape Tablet Optimization & Simulated Browser) -->
-    <main id="app-container" class="relative bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col w-full max-w-6xl aspect-[4/3] md:aspect-[16/10] mt-16 border border-gray-300">
+    <!-- Main Application Container (Full Screen Browser) -->
+    <main id="app-container" class="relative bg-white flex flex-col w-full h-full flex-1 overflow-hidden">
         
         <!-- Simulated Browser Chrome Header -->
         <header class="bg-gray-50 px-4 py-3 flex items-center gap-4 border-b border-gray-300 z-10 shrink-0">

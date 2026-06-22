@@ -6,7 +6,7 @@ const rawArticles = [
         date: "Thứ Hai, 15/05/2026, 08:30 (GMT+7)",
         sapo: "Nhìn vào định hướng Chương trình Giáo dục Phổ thông mới có thể thấy sự thay đổi toàn diện từ cơ sở vật chất đến phương pháp giảng dạy, đằng sau đó là muôn vàn cung bậc cảm xúc của học sinh và phụ huynh trước kỳ thi quan trọng.",
         subHeadline: "VUI MỪNG, TIẾC NUỐI, GIẬN DỮ...",
-        image: "kythitotnghiep.jpg",
+        image: "kythitotnghiep.jfif",
         imageCaption: "Điểm chuẩn và quy chế mới tạo ra sự phân hóa rất lớn giữa các nhóm học sinh. ẢNH: MINH HỌA",
         paragraphs: [
             {
@@ -39,7 +39,7 @@ const rawArticles = [
         date: "Thứ Tư, 17/05/2026, 14:15 (GMT+7)",
         sapo: "Trà sữa - Thức uống yêu thích của hàng triệu bạn trẻ đang tiềm ẩn nhiều nguy cơ khó lường nếu sử dụng không có chừng mực, đặc biệt là khi các cơ sở kinh doanh lách luật để tối đa hóa lợi nhuận.",
         subHeadline: "BÁO ĐỘNG TÌNH TRẠNG LẠM DỤNG ĐƯỜNG...",
-        image: "antoanthucpham.jpg",
+        image: "antoanthucpham.jpeg",
         imageCaption: "Thói quen tiêu thụ đồ uống nhiều đường đang gây áp lực lên hệ thống y tế công cộng. ẢNH: MINH HỌA",
         paragraphs: [
             {
@@ -105,7 +105,7 @@ const rawArticles = [
         date: "Chủ Nhật, 21/05/2026, 10:00 (GMT+7)",
         sapo: "Chuyển đổi số trường học không chỉ mang lại cơ sở vật chất khang trang mà còn dấy lên nhiều ý kiến trái chiều về quyền riêng tư và áp lực học tập của học sinh trong thời đại AI.",
         subHeadline: "HIỆU QUẢ HAY TẠO ÁP LỰC CHO HỌC SINH?",
-        image: "camera.jpg",
+        image: "camera.webp",
         imageCaption: "Hệ thống giám sát thông minh mang lại lợi ích an ninh nhưng cũng dấy lên nỗi lo về quyền riêng tư. ẢNH: MINH HỌA",
         paragraphs: [
             {

@@ -5,7 +5,7 @@ const rawArticles = [
         category: "Giáo dục",
         date: "Thứ Hai, 15/05/2026, 08:30 (GMT+7)",
         sapo: "Nhìn vào định hướng Chương trình Giáo dục Phổ thông mới có thể thấy sự thay đổi toàn diện từ cơ sở vật chất đến phương pháp giảng dạy, đằng sau đó là muôn vàn cung bậc cảm xúc của học sinh và phụ huynh trước kỳ thi quan trọng.",
-        subHeadline: "VUI MỪNG, TIẾC NUỐI, GIẬN DỮ...",
+        subHeadline: "NHỮNG QUY ĐỊNH MỚI GÂY TRANH CÃI DỮ DỘI...",
         image: "kythitotnghiep.jfif",
         imageCaption: "Điểm chuẩn và quy chế mới tạo ra sự phân hóa rất lớn giữa các nhóm học sinh. ẢNH: MINH HỌA",
         blocks: [

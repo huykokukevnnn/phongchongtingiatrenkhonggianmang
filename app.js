@@ -3,6 +3,7 @@ let currentLevel = 0;
 let attempts = 0;
 let hintsRemaining = 3;
 let isDragging = false;
+let currentDragLineY = null;
 let currentHighlightedSet = new Set();
 let globalWordIndex = 0;
 let totalFakeWordsInLevel = 0;
@@ -144,13 +145,22 @@ function createWordSpan(text, isFake) {
     
     const currentIndex = globalWordIndex;
     
-    span.addEventListener('mousedown', () => handleWordInteraction(currentIndex, span));
+    span.addEventListener('mousedown', () => {
+        currentDragLineY = span.offsetTop;
+        handleWordInteraction(currentIndex, span);
+    });
     span.addEventListener('mouseenter', () => {
-        if (isDragging) handleWordInteraction(currentIndex, span);
+        if (isDragging) {
+            if (currentDragLineY === null) currentDragLineY = span.offsetTop;
+            if (Math.abs(span.offsetTop - currentDragLineY) <= 12) {
+                handleWordInteraction(currentIndex, span);
+            }
+        }
     });
     
     span.addEventListener('touchstart', (e) => {
         e.preventDefault(); 
+        currentDragLineY = span.offsetTop;
         handleWordInteraction(currentIndex, span);
     });
     
@@ -172,22 +182,32 @@ function handleWordInteraction(index, spanElement) {
 }
 
 document.addEventListener('mousedown', () => isDragging = true);
-document.addEventListener('mouseup', () => isDragging = false);
+document.addEventListener('mouseup', () => {
+    isDragging = false;
+    currentDragLineY = null;
+});
 
 document.addEventListener('touchmove', (e) => {
     if (!isDragging) return;
     const touch = e.touches[0];
     const element = document.elementFromPoint(touch.clientX, touch.clientY);
     if (element && element.classList.contains('word') && !btnVerify.disabled) {
-        const idx = parseInt(element.dataset.index);
-        if (!currentHighlightedSet.has(idx)) {
-            currentHighlightedSet.add(idx);
-            element.classList.add('highlighted');
+        if (currentDragLineY === null) currentDragLineY = element.offsetTop;
+        
+        if (Math.abs(element.offsetTop - currentDragLineY) <= 12) {
+            const idx = parseInt(element.dataset.index);
+            if (!currentHighlightedSet.has(idx)) {
+                currentHighlightedSet.add(idx);
+                element.classList.add('highlighted');
+            }
         }
     }
 });
 document.addEventListener('touchstart', () => isDragging = true);
-document.addEventListener('touchend', () => isDragging = false);
+document.addEventListener('touchend', () => {
+    isDragging = false;
+    currentDragLineY = null;
+});
 
 btnHint.addEventListener('click', () => {
     if (hintsRemaining <= 0 || btnHint.disabled || btnVerify.disabled || !btnProceedReview.classList.contains('hidden')) return;

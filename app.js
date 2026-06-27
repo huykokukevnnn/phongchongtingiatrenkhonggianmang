@@ -3,6 +3,7 @@ let currentLevel = 0;
 let attempts = 0;
 let hintsRemaining = 3;
 let isDragging = false;
+let isEraserMode = false;
 let currentDragLineY = null;
 let currentHighlightedSet = new Set();
 let globalWordIndex = 0;
@@ -21,6 +22,7 @@ const attemptsDisplay = document.getElementById('attempts-display');
 const btnHint = document.getElementById('btn-hint');
 const hintCount = document.getElementById('hint-count');
 const btnProceedReview = document.getElementById('btn-proceed-review');
+const btnEraser = document.getElementById('btn-eraser');
 const btnReset = document.getElementById('btn-reset');
 const btnVerify = document.getElementById('btn-verify');
 const toast = document.getElementById('toast');
@@ -61,6 +63,16 @@ function updateUI() {
     btnReset.classList.remove('hidden');
     btnReset.disabled = false;
     btnReset.classList.remove('opacity-50', 'cursor-not-allowed');
+    
+    if (btnEraser) {
+        isEraserMode = false;
+        btnEraser.classList.remove('bg-gray-300', 'ring-2', 'ring-blue-500', 'text-blue-700');
+        btnEraser.classList.add('bg-white', 'text-gray-600');
+        btnEraser.classList.remove('hidden');
+        btnEraser.disabled = false;
+        btnEraser.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
     btnProceedReview.classList.add('hidden');
     
     if (hintsRemaining <= 0) {
@@ -172,12 +184,16 @@ function handleWordInteraction(index, spanElement) {
     if (attempts >= 3 && modal.classList.contains('hidden') === false) return; 
     if (btnVerify.disabled) return; 
     
-    if (currentHighlightedSet.has(index)) {
-        currentHighlightedSet.delete(index);
-        spanElement.classList.remove('highlighted');
+    if (isEraserMode) {
+        if (currentHighlightedSet.has(index)) {
+            currentHighlightedSet.delete(index);
+            spanElement.classList.remove('highlighted');
+        }
     } else {
-        currentHighlightedSet.add(index);
-        spanElement.classList.add('highlighted');
+        if (!currentHighlightedSet.has(index)) {
+            currentHighlightedSet.add(index);
+            spanElement.classList.add('highlighted');
+        }
     }
 }
 
@@ -196,9 +212,16 @@ document.addEventListener('touchmove', (e) => {
         
         if (Math.abs(element.offsetTop - currentDragLineY) <= 12) {
             const idx = parseInt(element.dataset.index);
-            if (!currentHighlightedSet.has(idx)) {
-                currentHighlightedSet.add(idx);
-                element.classList.add('highlighted');
+            if (isEraserMode) {
+                if (currentHighlightedSet.has(idx)) {
+                    currentHighlightedSet.delete(idx);
+                    element.classList.remove('highlighted');
+                }
+            } else {
+                if (!currentHighlightedSet.has(idx)) {
+                    currentHighlightedSet.add(idx);
+                    element.classList.add('highlighted');
+                }
             }
         }
     }
@@ -232,6 +255,20 @@ btnHint.addEventListener('click', () => {
 btnProceedReview.addEventListener('click', () => {
     initLevel(currentLevel + 1);
 });
+
+if (btnEraser) {
+    btnEraser.addEventListener('click', () => {
+        if (btnEraser.disabled || btnEraser.classList.contains('hidden') || btnVerify.disabled) return;
+        isEraserMode = !isEraserMode;
+        if (isEraserMode) {
+            btnEraser.classList.remove('bg-white', 'text-gray-600');
+            btnEraser.classList.add('bg-gray-300', 'ring-2', 'ring-blue-500', 'text-blue-700');
+        } else {
+            btnEraser.classList.remove('bg-gray-300', 'ring-2', 'ring-blue-500', 'text-blue-700');
+            btnEraser.classList.add('bg-white', 'text-gray-600');
+        }
+    });
+}
 
 btnReset.addEventListener('click', () => {
     if (btnVerify.disabled || btnReset.classList.contains('hidden')) return;
@@ -281,6 +318,11 @@ function visualizeAnswerKey(wordSpans) {
     btnVerify.classList.add('opacity-50', 'cursor-not-allowed');
     btnReset.disabled = true;
     btnReset.classList.add('opacity-50', 'cursor-not-allowed');
+    
+    if (btnEraser) {
+        btnEraser.disabled = true;
+        btnEraser.classList.add('opacity-50', 'cursor-not-allowed');
+    }
     
     wordSpans.forEach(span => {
         const isFake = span.dataset.isFake === "true";
@@ -333,6 +375,7 @@ btnNext.addEventListener('click', () => {
             // Chế độ Review Mode
             btnVerify.classList.add('hidden');
             btnReset.classList.add('hidden');
+            if (btnEraser) btnEraser.classList.add('hidden');
             btnProceedReview.classList.remove('hidden');
             btnHint.disabled = true;
             btnHint.classList.add('opacity-50', 'cursor-not-allowed');
